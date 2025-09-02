@@ -1,6 +1,7 @@
 // @ts-check
 const add_event_listener = EventTarget.prototype.addEventListener;
 const append = Element.prototype.append;
+const object_entries = Object.entries;
 
 // Select the elements we need to manipulate
 const button = /** @type {HTMLButtonElement} */ (document.getElementById('button'));
@@ -36,7 +37,7 @@ function attributes(element) {
  */
 function element(type, props = null, ...children) {
     const elem = document.createElement(type);
-    for (const [key, value] of Object.entries(props ?? {})) {
+    for (const [key, value] of object_entries(props ?? {})) {
         if (key.match(/^on/)) {
             add_event_listener.call(elem, key.slice(2), /** @type {(this: HTMLElementTagNameMap[Tag], event: Event) => void} */ (value));
         } else if (key === 'style') {
@@ -53,25 +54,15 @@ function element(type, props = null, ...children) {
     return elem;
 }
 
-/** @typedef {HTMLDivElement & { firstChild: Text; cloneNode(deep?: boolean): DivWithText }} DivWithText */
 
 class List extends HTMLElement {
-    #div = /** @type {DivWithText} */ (element('div', null, ''));
     connectedCallback() {
         const { elements = '', ...rest } = attributes(this);
-        /** @type {DivWithText | null} */
+        /** @type {Node | null} */
         let first = null;
-        for (const element of elements.split(' ')) {
-            const div = /** @type {DivWithText} */ (this.#div.cloneNode(true));
-            if (div.firstChild) {
-                div.firstChild.textContent = element;
-            }
-            for (const [name, value] of Object.entries(rest)) {
-                div.setAttribute(name, value);
-            }
-            if (first === null) {
-                first = /** @type {DivWithText} */ (div.cloneNode(true));
-            }
+        for (const text of elements.split(' ')) {
+            const div = element('div', rest, text);
+            first ??= div.cloneNode(true);
             append.call(this, div);
         }
         if (first !== null) {
@@ -79,6 +70,7 @@ class List extends HTMLElement {
         }
     }
 }
+
 customElements.define('list-elements', List);
 
 class Stat extends HTMLElement {
@@ -89,10 +81,7 @@ class Stat extends HTMLElement {
         const lines = parameter.split(/\\n/g);
         const len = lines.length;
         for (let i = 0; i < len; i++) {
-            param.append(lines[i]);
-            if (i < len - 1) {
-                append.call(param, element('br'));
-            }
+            append.apply(param, (i < len - 1) ? [lines[i], element('br')] : [lines[i]]);
         }
         append.call(this, element('div', { className: 'box' }, val, param));
     }
