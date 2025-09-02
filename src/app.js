@@ -4,20 +4,18 @@ const button = /** @type {HTMLButtonElement} */ (document.getElementById('button
 const panels = /** @type {NodeListOf<HTMLParagraphElement>} */ (document.querySelectorAll('.panel'));
 const close_button = /** @type {HTMLButtonElement} */ (document.getElementById('close'));
 
-
-// Add the event listener to the profile button
-button.addEventListener('click', () => {
-    for (const panel of panels) {
-        panel.classList.add('open');
+document.body.addEventListener('click', ({ target }) => {
+    if (target === button) {
+        for (const panel of panels) {
+            panel.classList.add('open');
+        }
+    } else if (target === close_button) {
+        for (const panel of panels) {
+            panel.classList.remove('open');
+        }
     }
 });
 
-// Add the event listener to the close button
-close_button.addEventListener('click', () => {
-    for (const panel of panels) {
-        panel.classList.remove('open');
-    }
-});
 /**
  * @param {HTMLElement} element
  * @returns {Record<string, string>}
@@ -76,8 +74,7 @@ class List extends HTMLElement {
         if (first !== null) {
             fragment.append(first.cloneNode(true));
         }
-        const shadow = this.attachShadow({ mode: 'open' });
-        shadow.append(fragment);
+        this.append(fragment);
     }
 }
 customElements.define('list-elements', List);
