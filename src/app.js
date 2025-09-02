@@ -1,10 +1,13 @@
 // @ts-check
+const add_event_listener = EventTarget.prototype.addEventListener;
+const append = Element.prototype.append;
+
 // Select the elements we need to manipulate
 const button = /** @type {HTMLButtonElement} */ (document.getElementById('button'));
 const panels = /** @type {NodeListOf<HTMLParagraphElement>} */ (document.querySelectorAll('.panel'));
 const close_button = /** @type {HTMLButtonElement} */ (document.getElementById('close'));
 
-document.body.addEventListener('click', ({ target }) => {
+add_event_listener.call(document.body, 'click', ({ target }) => {
     if (target === button) {
         for (const panel of panels) {
             panel.classList.add('open');
@@ -29,12 +32,13 @@ function attributes(element) {
  * @param {Tag} type
  * @param {Record<string, unknown> | null} [props]
  * @param {Array<Node | string>} children
+ * @returns {HTMLElementTagNameMap[Tag]}
  */
 function element(type, props = null, ...children) {
     const elem = document.createElement(type);
     for (const [key, value] of Object.entries(props ?? {})) {
         if (key.match(/^on/)) {
-            elem.addEventListener(key.slice(2), /** @type {(this: HTMLElementTagNameMap[Tag], event: Event) => void} */ (value));
+            add_event_listener.call(elem, key.slice(2), /** @type {(this: HTMLElementTagNameMap[Tag], event: Event) => void} */ (value));
         } else if (key === 'style') {
             elem.style.cssText = /** @type {string} */ (value);
         } else if (key === 'class') {
@@ -45,7 +49,7 @@ function element(type, props = null, ...children) {
             elem.setAttribute(key, /** @type {string} */ (value));
         }
     }
-    elem.append(...children);
+    append.call(elem, ...children);
     return elem;
 }
 
@@ -54,7 +58,6 @@ function element(type, props = null, ...children) {
 class List extends HTMLElement {
     #div = /** @type {DivWithText} */ (element('div', null, ''));
     connectedCallback() {
-        const fragment = document.createDocumentFragment();
         const { elements = '', ...rest } = attributes(this);
         /** @type {DivWithText | null} */
         let first = null;
@@ -69,12 +72,11 @@ class List extends HTMLElement {
             if (first === null) {
                 first = /** @type {DivWithText} */ (div.cloneNode(true));
             }
-            fragment.append(div);
+            append.call(this, div);
         }
         if (first !== null) {
-            fragment.append(first.cloneNode(true));
+            append.call(this, first.cloneNode(true));
         }
-        this.append(fragment);
     }
 }
 customElements.define('list-elements', List);
@@ -84,16 +86,15 @@ class Stat extends HTMLElement {
         const { value = '', parameter = '' } = attributes(this);
         const val = element('span', { className: 'value' }, value);
         const param = element('span', { className: 'parameter' });
-        const div = element('div', { className: 'box' }, val, param);
         const lines = parameter.split(/\\n/g);
-        for (let i = 0; i < lines.length; i++) {
-            const is_last = i === lines.length - 1;
+        const len = lines.length;
+        for (let i = 0; i < len; i++) {
             param.append(lines[i]);
-            if (!is_last) {
-                param.append(element('br'));
+            if (i < len - 1) {
+                append.call(param, element('br'));
             }
         }
-        this.append(div);
+        append.call(this, element('div', { className: 'box' }, val, param));
     }
 }
 
