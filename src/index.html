@@ -1,103 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mr Fast's Demo Site 2025</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Mr Fast's Demo Site 2025</title>
 
-    <!-- Link your stylesheet below this line -->
-    <link rel="stylesheet" href="app.css" />
-    <!-- Link your stylesheet above this line -->
-</head>
-<body>
-    <div class="frame">
-        
-        <div class="center">
+        <!-- Link your stylesheet below this line -->
+        <link rel="stylesheet" href="app.css" />
+        <!-- Link your stylesheet above this line -->
+    </head>
+    <body>
+        <div class="frame">
+            <div class="center">
+                <div class="image" id="button">
+                    <div class="circle-1"></div>
+                    <div class="circle-2"></div>
 
-            <div class="image" id="button">
-                <div class="circle-1"></div>
-                <div class="circle-2"></div>
+                    <!-- Replace the image below with your own, change the "alt" text to your name -->
+                    <img src="example.jpg" alt="Jazmyn Felicity" />
+                    <!-- Replace the image above with your own, change the "alt" text to your name -->
 
-                <!-- Replace the image below with your own, change the "alt" text to your name -->
-                <img src="example.jpg" alt="Jazmyn Felicity" />
-                <!-- Replace the image above with your own, change the "alt" text to your name -->
-
-                <div class="overlay"></div>
-                <div class="plus"></div>
-            </div>
-
-            <div class="name">
-
-                <div class="name1">
-
-                <!-- Replace the name below with your name -->
-                    Jazmyn Felicity
-                <!-- Replace the name above with your name -->
-
+                    <div class="overlay"></div>
+                    <div class="plus"></div>
                 </div>
-            </div>
 
-            <div class="carousel">
-                    <div class="pre">I'm a </div>
+                <div class="name">
+                    <div class="name1">
+                        <!-- Replace the name below with your name -->
+                        Jazmyn Felicity
+                        <!-- Replace the name above with your name -->
+                    </div>
+                </div>
+
+                <div class="carousel">
+                    <div class="pre">I'm a</div>
                     <div class="change_outer">
                         <div class="change_inner">
-                            <list-elements elements="Developer Designer Teacher Gamer" class="element"></list-elements>
+                            <list-elements
+                                elements="Developer Designer Teacher Gamer"
+                                class="element"
+                            ></list-elements>
                         </div>
                     </div>
                 </div>
             </div>
 
-        <div class="profile panel">
-			<div class="image">
-				<div class="circle-1"></div>
-				<div class="circle-2"></div>
+            <div class="profile panel">
+                <div class="image">
+                    <div class="circle-1"></div>
+                    <div class="circle-2"></div>
 
-                <!-- Replace the image below with your own, change the "alt" text to your name -->
-				<img src="example.jpg" alt="Jazmyn Felicity" />
-                <!-- Replace the image above with your own, change the "alt" text to your name -->
+                    <!-- Replace the image below with your own, change the "alt" text to your name -->
+                    <img src="example.jpg" alt="Jazmyn Felicity" />
+                    <!-- Replace the image above with your own, change the "alt" text to your name -->
+                </div>
 
+                <div class="name">
+                    <!-- Replace the name below with your name -->
+                    Jazmyn Felicity
+                    <!-- Replace the name above with your name -->
+                </div>
+                <div class="job">
+                    <!-- Replace the job below with your job or a clean subtitle of your choice -->
+                    Full-Stack Developer
+                    <!-- Replace the job below with your job or a clean subtitle of your choice -->
+                </div>
 
-			</div>
-			
-			<div class="name">
-                
-                <!-- Replace the name below with your name -->
-                Jazmyn Felicity
-                <!-- Replace the name above with your name -->
-            
+                <div class="actions">
+                    <button class="btn">Follow</button>
+                    <button class="btn">Message</button>
+                </div>
+
+                <div id="close"></div>
             </div>
-			<div class="job">
-                
-                <!-- Replace the job below with your job or a clean subtitle of your choice -->
-                Full-Stack Developer
-                <!-- Replace the job below with your job or a clean subtitle of your choice -->
-            
 
+            <div class="stats panel">
+                <!-- Modify the items below make them your own, edit the numbers or text between the > and < symbols -->
+                <github-stats></github-stats>
+                <stat-element
+                    value="23"
+                    parameter="States\nVisited"
+                ></stat-element>
+                <stat-element
+                    value="100+"
+                    parameter="Published\nSites"
+                ></stat-element>
+                <stat-element
+                    value="1672"
+                    parameter="Steam\nLibrary"
+                ></stat-element>
+                <!-- Modify the items above make them your own, edit the numbers or text between the > and < symbols -->
             </div>
-			
-			<div class="actions">
-				<button class="btn">Follow</button>
-				<button class="btn">Message</button>
-			</div>
-
-            <div id="close"></div>
-		</div>
-		
-		<div class="stats panel">
-
-            <!-- Modify the items below make them your own, edit the numbers or text between the > and < symbols -->
-            <stat-element value="9" parameter="Years\nTeaching"></stat-element>
-            <stat-element value="23" parameter="States\nVisited"></stat-element>
-            <stat-element value="100+" parameter="Published\nSites"></stat-element>
-            <stat-element value="1672" parameter="Steam\nLibrary"></stat-element>
-            <!-- Modify the items above make them your own, edit the numbers or text between the > and < symbols -->
-
-		</div>
-
-        
-
-      </div>
-      <script src="app.js"></script>
-</body>
+        </div>
+        <script src="app.js"></script>
+    </body>
 </html>
