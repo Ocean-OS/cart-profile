@@ -102,10 +102,24 @@ class List extends HTMLElement {
 customElements.define('list-elements', List);
 
 class Stat extends HTMLElement {
+    static observedAttributes = /** @type {const} */ (['value', 'parameter']);
+
+    /** @type {HTMLSpanElement} */
+    #value;
+
+    /** @type {HTMLSpanElement} */
+    #param;
+
     connectedCallback() {
         const { value = '', parameter = '' } = attributes(this);
-        const val = element('span', { className: 'value' }, value);
-        const param = element('span', { className: 'parameter' });
+        const val = (this.#value = element(
+            'span',
+            { className: 'value' },
+            value
+        ));
+        const param = (this.#param = element('span', {
+            className: 'parameter'
+        }));
         const lines = parameter.split(/\\n/g);
         const len = lines.length;
         for (let i = 0; i < len; i++) {
@@ -116,41 +130,61 @@ class Stat extends HTMLElement {
         }
         append.call(this, element('div', { className: 'box' }, val, param));
     }
+
+    /**
+     * @param {(typeof Stat)['observedAttributes'][number]} name
+     * @param {string} _
+     * @param {string} curr
+     */
+    attributeChangedCallback(name, _, curr) {
+        // `attributeChangedCallback` is called on initialization, when we haven't set `#value` or `#param`
+        if (!this.#value || !this.#param) {
+            return;
+        }
+        if (name === 'value') {
+            /** @type {Text} */ (this.#value.firstChild).textContent = curr;
+        } else {
+            this.#param.replaceChildren();
+            const lines = curr.split(/\\n/g);
+            const len = lines.length;
+            for (let i = 0; i < len; i++) {
+                append.apply(
+                    this.#param,
+                    i < len - 1 ? [lines[i], element('br')] : [lines[i]]
+                );
+            }
+        }
+    }
 }
 
 customElements.define('stat-element', Stat);
 
 class GithubStats extends HTMLElement {
     async connectedCallback() {
+        const stats = element('stat-element', {
+            parameter: 'GitHub Contributions\\nThis Week',
+            value: 'Loading...'
+        });
+        append.call(this, stats);
         try {
             const url = 'https://api.github.com/users/Ocean-OS/events/public';
             const res = await fetch(url, {
                 headers: {
-                    Accept: 'application/vnd.github+json',
-                },
+                    Accept: 'application/vnd.github+json'
+                }
             });
             const contributions =
                 /** @type {Array<Record<string, any> & { created_at: string }>} */ (
                     await res.json()
                 );
-            const week = contributions.filter((contribution) => {
+            const week = contributions.filter(contribution => {
                 const date = new Date(contribution.created_at).getTime();
                 const days = date / ms_to_days;
                 return days - days_since_epoch <= 7;
             });
-            const stats = element('stat-element', {
-                parameter: 'GitHub Contributions\\nThis Week',
-                value: week.length,
-            });
-            append.call(this, stats);
+            stats.setAttribute('value', String(week.length));
         } catch {
-            append.call(
-                this,
-                element('stat-element', {
-                    parameter: 'GitHub Contributions\\nThis Week',
-                    value: '20+',
-                })
-            );
+            stats.setAttribute('value', '20+');
         }
     }
 }
