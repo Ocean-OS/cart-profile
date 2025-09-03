@@ -1,30 +1,40 @@
 // @ts-check
+// cache prototype methods to improve inlining/IC
 const add_event_listener = EventTarget.prototype.addEventListener;
 const append = Element.prototype.append;
 const object_entries = Object.entries;
+const set_attribute = Element.prototype.setAttribute;
+const clone_node = Node.prototype.cloneNode;
+
 const ms_to_days = 1000 * 60 * 60 * 24;
+const days_since_epoch = new Date().getTime() / ms_to_days;
+
 const button = /** @type {HTMLButtonElement} */ (
-    document.getElementById('button')
+    document.querySelector('#button')
 );
 const panels = /** @type {NodeListOf<HTMLParagraphElement>} */ (
     document.querySelectorAll('.panel')
 );
 const close_button = /** @type {HTMLButtonElement} */ (
-    document.getElementById('close')
+    document.querySelector('#close')
 );
 
 // delegate `click` events from the body to the open and close buttons
-add_event_listener.call(document.body, 'click', ({ target }) => {
-    if (target === button) {
-        for (const panel of panels) {
-            panel.classList.add('open');
-        }
-    } else if (target === close_button) {
-        for (const panel of panels) {
-            panel.classList.remove('open');
+add_event_listener.call(
+    document.body,
+    'click',
+    (/** @type {{ target: ParentNode }} */ { target }) => {
+        if (target === button || button.contains(target)) {
+            for (const panel of panels) {
+                panel.classList.add('open');
+            }
+        } else if (target === close_button || close_button.contains(target)) {
+            for (const panel of panels) {
+                panel.classList.remove('open');
+            }
         }
     }
-});
+);
 
 /**
  * @param {HTMLElement} element
@@ -61,7 +71,7 @@ function element(type, props = null, ...children) {
         } else if (key in elem) {
             elem[key] = value;
         } else {
-            elem.setAttribute(key, /** @type {string} */ (value));
+            set_attribute.call(elem, key, /** @type {string} */ (value));
         }
     }
     append.call(elem, ...children);
@@ -75,11 +85,11 @@ class List extends HTMLElement {
         let first = null;
         for (const text of elements.split(' ')) {
             const div = element('div', rest, text);
-            first ??= div.cloneNode(true);
+            first ??= clone_node.call(div, true);
             append.call(this, div);
         }
         if (first !== null) {
-            append.call(this, first.cloneNode(true));
+            append.call(this, first);
         }
     }
 }
@@ -105,7 +115,6 @@ class Stat extends HTMLElement {
 
 customElements.define('stat-element', Stat);
 
-const days_since_epoch = new Date().getTime() / ms_to_days;
 class GithubStats extends HTMLElement {
     async connectedCallback() {
         try {
@@ -125,15 +134,16 @@ class GithubStats extends HTMLElement {
                 return days - days_since_epoch <= 7;
             });
             const stats = element('stat-element', {
-                value: 'Github Contributions\\nThis Week',
-                parameter: week.length,
+                parameter: 'Github Contributions\\nThis Week',
+                value: week.length,
             });
-            this.append(stats);
+            append.call(this, stats);
         } catch {
-            this.append(
+            append.call(
+                this,
                 element('stat-element', {
-                    value: 'Github Contributions\\nThis Week',
-                    parameter: '10',
+                    parameter: 'Github Contributions\\nThis Week',
+                    value: '20+',
                 })
             );
         }
