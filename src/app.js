@@ -2,7 +2,7 @@
 const add_event_listener = EventTarget.prototype.addEventListener;
 const append = Element.prototype.append;
 const object_entries = Object.entries;
-
+const ms_to_days = 1000 * 60 * 60 * 24;
 const button = /** @type {HTMLButtonElement} */ (
     document.getElementById('button')
 );
@@ -105,27 +105,35 @@ class Stat extends HTMLElement {
 
 customElements.define('stat-element', Stat);
 
+const days_since_epoch = new Date().getTime() / ms_to_days;
 class GithubStats extends HTMLElement {
     async connectedCallback() {
         try {
-            const url = 'https://github.com/users/Ocean-OS/contributions';
-            const res = await fetch(url);
-            const text = await res.text();
-            const parser = new DOMParser();
-            const tree = parser.parseFromString(text, 'text/html');
-            const contributions = tree
-                .querySelector('h2#js-contribution-activity-description')
-                ?.textContent?.split(' ')?.[0];
+            const url = 'https://api.github.com/users/Ocean-OS/events/public';
+            const res = await fetch(url, {
+                headers: {
+                    Accept: 'application/vnd.github+json',
+                },
+            });
+            const contributions =
+                /** @type {Array<Record<string, any> & { created_at: string }>} */ (
+                    await res.json()
+                );
+            const week = contributions.filter((contribution) => {
+                const date = new Date(contribution.created_at).getTime();
+                const days = date / ms_to_days;
+                return days - days_since_epoch <= 7;
+            });
             const stats = element('stat-element', {
-                value: 'Github Stats',
-                parameter: contributions,
+                value: 'Github Contributions\\nThis Week',
+                parameter: week.length,
             });
             this.append(stats);
         } catch {
             this.append(
                 element('stat-element', {
-                    value: 'Github Stats',
-                    parameter: '310',
+                    value: 'Github Contributions\\nThis Week',
+                    parameter: '10',
                 })
             );
         }
