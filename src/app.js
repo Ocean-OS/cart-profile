@@ -364,7 +364,12 @@ function do_the_thing() {
     });
     function erase_score() {
         ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, 50 + 15 * ~~Math.abs(score() / 10), 50);
+        ctx.fillRect(
+            0,
+            0,
+            50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 10 : 0),
+            50
+        );
     }
     const update = () => {
         ctx.fillStyle = 'white';
