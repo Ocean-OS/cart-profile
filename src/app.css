@@ -338,9 +338,6 @@ a {
             & .circle-2 {
                 transform: rotate(-360deg);
             }
-            /* & .circle-2 {
-                transform: rotate(360deg);
-            } */
         }
     }
     & .name {
@@ -380,7 +377,6 @@ a {
     position: absolute;
     right: -120px;
     z-index: 2;
-    /* background: #fff; */
     color: white;
     pointer-events: none;
     & .box {
