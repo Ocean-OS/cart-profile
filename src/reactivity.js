@@ -279,10 +279,10 @@ function sort_effects(effects) {
         if (a.parent === b.parent) {
             const { parent } = a;
             if ((parent.f & DERIVED) !== 0) {
-                const computed =
+                const derived =
                     /** @type {Derived & { effects: Effect[] }} */ (parent);
-                const a_index = computed.effects.indexOf(a);
-                const b_index = computed.effects.indexOf(b);
+                const a_index = derived.effects.indexOf(a);
+                const b_index = derived.effects.indexOf(b);
                 return a_index < b_index ? a : b;
             } else {
                 let curr = /** @type {Effect} */ (parent).head;
