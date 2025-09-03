@@ -58,7 +58,7 @@ function element(type, props = null, ...children) {
     /** @typedef {Tag extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[Tag] : HTMLElement} This */
     const elem = /** @type {This} */ (document.createElement(type));
     for (const [key, value] of object_entries(props ?? {})) {
-        if (key.match(/^on/)) {
+        if (key.slice(0, 2) === 'on') {
             add_event_listener.call(
                 elem,
                 key.slice(2),
@@ -83,7 +83,7 @@ class List extends HTMLElement {
         const { elements = '', ...rest } = attributes(this);
         /** @type {Node | null} */
         let first = null;
-        for (const text of elements.split(' ')) {
+        for (const text of elements.split('|')) {
             const div = element('div', rest, text);
             first ??= clone_node.call(div, true);
             append.call(this, div);
