@@ -1,4 +1,4 @@
-import { signal, derived, effect } from './reactivity';
+import { signal, derived, effect } from './reactivity.js';
 
 // @ts-check
 // cache prototype methods to improve inlining/IC
