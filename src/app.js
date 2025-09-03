@@ -307,8 +307,7 @@ function do_the_thing() {
     ctx.fillStyle = 'white';
     ctx.font = 'bold 30px monospace';
     effect(() => {
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, 50 + 15 * ~~(score() / 10), 50);
+        erase_score();
         ctx.fillStyle = 'white';
         ctx.fillText(score(), 20, 30);
     });
@@ -363,6 +362,10 @@ function do_the_thing() {
             set_right(false);
         }
     });
+    function erase_score() {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, 50 + 15 * ~~Math.abs(score() / 10), 50);
+    }
     const update = () => {
         ctx.fillStyle = 'white';
         ctx.fillRect(player() - 35, 180, 80, 10);
@@ -370,8 +373,7 @@ function do_the_thing() {
         set_x(x => x + direction.x);
         set_y(y => y + direction.y);
         if (y() <= 50 && x() <= 50 + 15 * ~~(score() / 10)) {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, 50 + 15 * ~~(score() / 10), 50);
+            erase_score();
             ctx.fillStyle = 'white';
             ctx.fillText(score(), 20, 30);
         }
