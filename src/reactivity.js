@@ -1,4 +1,5 @@
 /** @import { Source, Reaction, Derived, Effect, Fork } from './types.js' */
+/// <reference lib="es2024" />
 // @ts-check
 const DIRTY = 1 << 1;
 const MAYBE_DIRTY = 1 << 2;
@@ -80,6 +81,7 @@ let active_fork = null;
 let applying_fork = null;
 // used as a placeholder value to make sure an e.g. try block succeeded
 const EMPTY = Symbol();
+let root_index = 0;
 
 /**
  * @template T
@@ -90,7 +92,8 @@ function source(initial) {
     return {
         v: initial,
         reactions: null,
-        f: 0
+        f: 0,
+        parent: reaction_stack.at(-1) ?? null
     };
 }
 
@@ -106,7 +109,8 @@ function derived_source(fn) {
         deps: null,
         f: UNINITIALIZED | DERIVED,
         fn,
-        effects: null
+        effects: null,
+        parent: reaction_stack.at(-1) ?? null
     };
 }
 
@@ -174,7 +178,15 @@ function teardown_effect(effect) {
     } else if (effect.prev !== null) {
         effect.prev = null;
     } else if (effect.parent !== null) {
-        effect.parent.head = effect.parent.tail = null;
+        if ((effect.parent.f & DERIVED) !== 0) {
+            const parent = /** @type {Derived & { effects: Effect[] }} */ (
+                effect.parent
+            );
+            parent.effects.splice(parent.effects.indexOf(effect), 1);
+        } else {
+            const parent = /** @type {Effect} */ (effect.parent);
+            parent.head = parent.tail = null;
+        }
     }
     if (effect.teardown) {
         reaction_stack.push(null);
@@ -227,6 +239,161 @@ function get(source) {
 }
 
 /**
+ * Returns an array of effects sorted by their depth in the effect tree.
+ * For example, if your effect tree looks like this:
+ * ```text
+ *     A       B
+ *   /  \     / \
+ *  C   D    E  F
+ *     / \     /|\
+ *    G  H    I J K
+ * ```
+ * Then the resulting array could be `[A, B, C, D, E, F, G, H, I, J, K]`.
+ * Since `A`'s tree and `B`'s tree are not connected,
+ * the array could be different in this scenario.
+ * @param {Effect[]} effects
+ */
+function sort_effects(effects) {
+    /**
+     * @param {Effect} effect
+     */
+    function get_effect_depth(effect) {
+        let depth = 0;
+        let curr = effect.parent;
+        while (curr) {
+            depth++;
+            curr = curr.parent;
+        }
+        return depth;
+    }
+    /**
+     * Takes two effects and returns the one that comes first in the effect tree
+     * If the effects have no ancestral relationship in the tree, `a` is returned
+     * @template {Effect & { parent: Reaction }} A
+     * @template {Effect & { parent: Reaction }} B
+     * @param {A} a
+     * @param {B} b
+     * @returns {A | B}
+     */
+    function sort_effects(a, b) {
+        if (a.parent === b.parent) {
+            const { parent } = a;
+            if ((parent.f & DERIVED) !== 0) {
+                const computed =
+                    /** @type {Derived & { effects: Effect[] }} */ (parent);
+                const a_index = computed.effects.indexOf(a);
+                const b_index = computed.effects.indexOf(b);
+                return a_index < b_index ? a : b;
+            } else {
+                let curr = /** @type {Effect} */ (parent).head;
+                while (curr) {
+                    if (curr === a) {
+                        return a;
+                    }
+                    if (curr === b) {
+                        return b;
+                    }
+                    curr = curr.next;
+                }
+            }
+        }
+        /** @type {Reaction} */
+        var prev_a = a;
+        /** @type {Reaction} */
+        var prev_b = b;
+        /** @type {Reaction | null} */
+        var curr_a = a.parent;
+        /** @type {Reaction | null} */
+        var curr_b = b.parent;
+        while (curr_a && curr_b) {
+            if (curr_a === curr_b) {
+                var curr = /** @type {Effect} */ (curr_a).head;
+                while (curr) {
+                    if (curr === prev_a) {
+                        return a;
+                    }
+                    if (curr === prev_b) {
+                        return b;
+                    }
+                    curr = curr.next;
+                }
+            } else {
+                prev_a = curr_a;
+                prev_b = curr_b;
+                curr_a = curr_a.parent;
+                curr_b = curr_b.parent;
+            }
+        }
+        // `a` and `b` are completely separated in the effect tree, return `a`
+        return a;
+    }
+    /** @type {Map<number, Effect[]>} */
+    const effect_depths = new Map();
+    for (const effect of effects) {
+        const depth = get_effect_depth(effect);
+        if (!effect_depths.has(depth)) {
+            effect_depths.set(depth, []);
+        }
+        effect_depths.get(depth)?.push(effect);
+    }
+    const layers = new Set([...effect_depths.keys()].toSorted((a, b) => a - b));
+    const res = [];
+    for (const effect_depth of layers) {
+        const layer = /** @type {Effect[]} */ (effect_depths.get(effect_depth));
+        if (effect_depth === 0) {
+            const sorted = layer.toSorted(
+                (a, b) => (a.root_index ?? 0) - (b.root_index ?? 0)
+            );
+            for (const effect of sorted) {
+                res.push(effect);
+            }
+            continue;
+        }
+        const effects = /** @type {Array<Effect & { parent: Reaction }>} */ (
+            layer
+        ).toSorted((a, b) => (sort_effects(a, b) === a ? -1 : 1));
+        for (const effect of effects) {
+            res.push(effect);
+        }
+    }
+    return res;
+}
+
+/**
+ * Filters child effects if their parents exist.
+ * For example, if your effect tree looks like this:
+ * ```text
+ *     A       B
+ *   /  \     / \
+ *  C   D    E  F
+ *     / \     /|\
+ *    G  H    I J K
+ * ```
+ * And `effects` is `[H, F, D, K, I, A]`,
+ * then the returned array will be `[F, A]`, since all other effects
+ * are children or grandchildren of `F` or `A`.
+ * @param {Effect[]} effects
+ */
+function filter_effects(effects) {
+    const res = [];
+    outer: for (const effect of effects) {
+        /** @type {Effect | null} */
+        var curr = /** @type {Effect | null} */ (effect.parent);
+        while (curr) {
+            if ((curr.f & DERIVED) !== 0) {
+                break;
+            }
+            if (effects.includes(curr)) {
+                continue outer;
+            }
+            curr = /** @type {Effect | null} */ (curr.parent);
+        }
+        res.push(effect);
+    }
+    return res;
+}
+
+/**
  * @param {Source | Derived} source
  */
 function mark_dirty(source) {
@@ -234,9 +401,12 @@ function mark_dirty(source) {
     if (source.reactions !== null) {
         /** @type {Derived[]} */
         const queued_deriveds = [];
+
         /** @type {Effect[]} */
         const to_check = [];
+
         let should_queue = false;
+
         for (const reaction of source.reactions) {
             if ((reaction.f & DERIVED) !== 0) {
                 if (
@@ -258,20 +428,24 @@ function mark_dirty(source) {
                 to_check.push(/** @type {Effect} */ (reaction));
             }
         }
+
         for (const derived of queued_deriveds) {
             const changed = update_derived(derived);
             if (changed) {
                 mark_dirty(derived);
             }
         }
+        const filtered = sort_effects(filter_effects(to_check));
         const prev_queue = queue.length;
-        for (const effect of to_check) {
+
+        for (const effect of filtered) {
             if ((effect.f & DIRTY) === 0) {
                 effect.f |= DIRTY;
                 queue.push(effect);
                 should_queue = true;
             }
         }
+
         if (should_queue && prev_queue === 0) {
             queueMicrotask(() => {
                 var effect;
@@ -291,7 +465,7 @@ function mark_dirty(source) {
                 }
             });
         }
-        to_check.length = queued_deriveds.length = 0;
+        to_check.length = filtered.length = queued_deriveds.length = 0;
     }
     source.f &= ~DIRTY;
 }
@@ -368,7 +542,8 @@ function create_effect(fn, flags = 0) {
         prev: null,
         head: null,
         tail: null,
-        deps: null
+        deps: null,
+        root_index: reaction_stack.length > 0 ? null : root_index++
     });
     reaction_stack.push(reaction);
     var teardown;
@@ -392,14 +567,20 @@ function create_effect(fn, flags = 0) {
         if (reaction.parent === null) {
             return reaction;
         }
-        if (reaction.parent.head === null) {
-            reaction.parent.head = reaction.parent.tail = reaction;
+        if ((reaction.parent.f & DERIVED) !== 0) {
+            const parent = /** @type {Derived} */ (reaction.parent);
+            (parent.effects ??= []).push(reaction);
         } else {
-            if (reaction.parent.tail !== null) {
-                reaction.parent.tail.next = reaction;
+            const parent = /** @type {Effect} */ (reaction.parent);
+            if (parent.head === null) {
+                parent.head = parent.tail = reaction;
+            } else {
+                if (parent.tail !== null) {
+                    parent.tail.next = reaction;
+                }
+                reaction.prev = parent.tail;
+                parent.tail = reaction;
             }
-            reaction.prev = reaction.parent.tail;
-            reaction.parent.tail = reaction;
         }
     }
     return reaction;

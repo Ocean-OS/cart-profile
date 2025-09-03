@@ -1,10 +1,14 @@
-export interface Source<T = unknown> {
-    v: T;
+interface ReactiveNode {
     f: number;
-    reactions: Reaction[] | null;
-} 
+    parent: Reaction | null;
+}
 
-export interface Reaction {
+export interface Source<T = unknown> extends ReactiveNode {
+    v: T;
+    reactions: Reaction[] | null;
+}
+
+export interface Reaction extends ReactiveNode {
     f: number;
     deps: Array<Source & { reactions: Reaction[] }> | null;
     fn: () => any;
@@ -20,7 +24,6 @@ export interface Derived<T = unknown> extends Source<T>, Reaction {
 export interface Effect extends Reaction {
     fn: () => void | (() => void);
     teardown: (() => void) | null;
-    parent: Effect | null;
     head: Effect | null;
     tail: Effect | null;
     next: Effect | null;
@@ -29,8 +32,8 @@ export interface Effect extends Reaction {
 
 export interface Fork {
     /**
-     * Applies the state changes that occurred in the fork.   
-     * 
+     * Applies the state changes that occurred in the fork.
+     *
      * Example:
      * ```js
      * let [count, set_count] = signal(0);
@@ -44,9 +47,9 @@ export interface Fork {
      */
     apply(): void;
     /**
-     * Runs `fn` in a context that contains 
-     * the state changes applied from the fork.   
-     * 
+     * Runs `fn` in a context that contains
+     * the state changes applied from the fork.
+     *
      * Example:
      * ```js
      * let [count, set_count] = signal(0);
@@ -60,5 +63,5 @@ export interface Fork {
      * console.log(count()); // `0`
      * ```
      */
-    with<T>(fn: () => T): T
+    with<T>(fn: () => T): T;
 }

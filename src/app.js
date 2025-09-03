@@ -320,7 +320,7 @@ function do_the_thing() {
         ctx.fillRect((prev_bot = bot()) - 35, 20, 80, 10);
         if (
             prev_bot <
-            50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 10 : 0)
+            50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 15 : 0)
         ) {
             update_score();
         }
@@ -367,7 +367,7 @@ function do_the_thing() {
         ctx.fillRect(
             0,
             0,
-            50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 10 : 0),
+            50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 15 : 0),
             50
         );
     }
@@ -377,7 +377,10 @@ function do_the_thing() {
         ctx.fillRect(bot() - 35, 20, 80, 10);
         set_x(x => x + direction.x);
         set_y(y => y + direction.y);
-        if (y() <= 50 && x() <= 50 + 15 * ~~(score() / 10)) {
+        if (
+            y() <= 50 &&
+            x() <= 50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 15 : 0)
+        ) {
             erase_score();
             ctx.fillStyle = 'white';
             ctx.fillText(score(), 20, 30);
