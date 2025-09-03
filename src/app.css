@@ -259,11 +259,19 @@ body {
 .stats {
     position: absolute;
     z-index: 2;
-    background: #fff;
     pointer-events: none;
     height: 400px;
     transition: all 1s ease-in-out;
     box-shadow: 1px 0px 3px rgba(0, 0, 0, 0.3);
+}
+
+a {
+    color: #888;
+    text-decoration-color: transparent;
+    transition: all 0.2s ease-in-out;
+    &:hover {
+        text-decoration-color: #888;
+    }
 }
 
 .profile {
@@ -326,7 +334,7 @@ body {
     }
     & .actions {
         margin-top: 33px;
-        & .btn {
+        & button {
             display: block;
             width: 120px;
             height: 30px;

@@ -18,6 +18,9 @@ const panels = /** @type {NodeListOf<HTMLParagraphElement>} */ (
 const close_button = /** @type {HTMLButtonElement} */ (
     document.querySelector('#close')
 );
+const github_button = /** @type {HTMLButtonElement} */ (
+    document.querySelector('.actions > button')
+);
 
 // delegate `click` events from the body to the open and close buttons
 add_event_listener.call(
@@ -32,6 +35,8 @@ add_event_listener.call(
             for (const panel of panels) {
                 panel.classList.remove('open');
             }
+        } else if (target === github_button || github_button.contains(target)) {
+            window.open('https://github.com/Ocean-OS', '_blank');
         }
     }
 );
@@ -134,7 +139,7 @@ class GithubStats extends HTMLElement {
                 return days - days_since_epoch <= 7;
             });
             const stats = element('stat-element', {
-                parameter: 'Github Contributions\\nThis Week',
+                parameter: 'GitHub Contributions\\nThis Week',
                 value: week.length,
             });
             append.call(this, stats);
@@ -142,7 +147,7 @@ class GithubStats extends HTMLElement {
             append.call(
                 this,
                 element('stat-element', {
-                    parameter: 'Github Contributions\\nThis Week',
+                    parameter: 'GitHub Contributions\\nThis Week',
                     value: '20+',
                 })
             );
