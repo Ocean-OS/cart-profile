@@ -205,59 +205,53 @@ document.body.addEventListener('keydown', e => {
             if (e.key === 'ArrowUp') {
                 keys++;
                 e.preventDefault();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         case 2:
         case 3:
             if (e.key === 'ArrowDown') {
                 keys++;
                 e.preventDefault();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         case 4:
         case 6:
             if (e.key === 'ArrowLeft') {
                 keys++;
                 e.preventDefault();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         case 5:
         case 7:
             if (e.key === 'ArrowRight') {
                 keys++;
                 e.preventDefault();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         case 8:
             if (e.key === 'b') {
                 keys++;
                 e.preventDefault();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         case 9:
             if (e.key === 'a') {
                 keys++;
                 e.preventDefault();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         case 10:
             if (e.key === 'Enter') {
                 keys++;
@@ -265,11 +259,10 @@ document.body.addEventListener('keydown', e => {
                 console.log('yippee');
                 keys = 0;
                 do_the_thing();
-                return;
             } else {
                 keys = 0;
-                return;
             }
+            return;
         default:
             keys = 0;
     }
