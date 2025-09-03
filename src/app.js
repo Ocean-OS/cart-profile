@@ -299,11 +299,12 @@ function do_the_thing() {
     });
     ctx.fillStyle = 'white';
     ctx.font = 'bold 30px monospace';
-    effect(() => {
+    function update_score() {
         erase_score();
         ctx.fillStyle = 'white';
         ctx.fillText(score(), 20, 30);
-    });
+    }
+    effect(update_score);
     effect(() => {
         let prev_player;
         ctx.fillStyle = 'white';
@@ -317,6 +318,12 @@ function do_the_thing() {
         let prev_bot;
         ctx.fillStyle = 'white';
         ctx.fillRect((prev_bot = bot()) - 35, 20, 80, 10);
+        if (
+            prev_bot <
+            50 + 15 * ~~Math.abs(score() / 10) + (score() < 0 ? 10 : 0)
+        ) {
+            update_score();
+        }
         return () => {
             ctx.fillStyle = 'black';
             ctx.fillRect(prev_bot - 35, 20, 80, 10);
