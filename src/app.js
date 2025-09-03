@@ -1,3 +1,5 @@
+import { signal, derived, effect } from './reactivity';
+
 // @ts-check
 // cache prototype methods to improve inlining/IC
 const add_event_listener = EventTarget.prototype.addEventListener;
@@ -190,3 +192,253 @@ class GithubStats extends HTMLElement {
 }
 
 customElements.define('github-stats', GithubStats);
+console.log('%cpssst...', 'color: gray');
+console.log(
+    '%cup up down down left right left right b a enter',
+    'color: #aabbff'
+);
+let keys = 0;
+document.body.addEventListener('keydown', e => {
+    switch (keys) {
+        case 0:
+        case 1:
+            if (e.key === 'ArrowUp') {
+                keys++;
+                e.preventDefault();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        case 2:
+        case 3:
+            if (e.key === 'ArrowDown') {
+                keys++;
+                e.preventDefault();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        case 4:
+        case 6:
+            if (e.key === 'ArrowLeft') {
+                keys++;
+                e.preventDefault();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        case 5:
+        case 7:
+            if (e.key === 'ArrowRight') {
+                keys++;
+                e.preventDefault();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        case 8:
+            if (e.key === 'b') {
+                keys++;
+                e.preventDefault();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        case 9:
+            if (e.key === 'a') {
+                keys++;
+                e.preventDefault();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        case 10:
+            if (e.key === 'Enter') {
+                keys++;
+                e.preventDefault();
+                console.log('yippee');
+                keys = 0;
+                do_the_thing();
+                return;
+            } else {
+                keys = 0;
+                return;
+            }
+        default:
+            keys = 0;
+    }
+});
+
+function do_the_thing() {
+    const canvas = element('canvas', { width: 300, height: 200 });
+    append.call(document.body, canvas);
+    const ctx = canvas.getContext('2d');
+    const [score, set_score] = signal(0);
+    const [x, set_x] = signal(150);
+    const [y, set_y] = signal(100);
+    const [player, set_player] = signal(150);
+    let [left, set_left] = signal(false);
+    let [right, set_right] = signal(false);
+    let prev_bot = 150;
+    let prev_x = 150;
+    /**
+     * @param {number} value
+     * @param {number} min
+     * @param {number} max
+     */
+    function clamp(value, min = -Infinity, max = Infinity) {
+        return Math.min(Math.max(value, min), max);
+    }
+    const bot = derived(() => {
+        if (prev_bot < x()) {
+            return (prev_bot = clamp(prev_bot + ~~(Math.random() * 2), 0, 300));
+        }
+        if (prev_bot > x()) {
+            return (prev_bot = clamp(prev_bot - ~~(Math.random() * 2), 0, 300));
+        }
+        return prev_bot;
+    });
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 30px monospace';
+    effect(() => {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, 50 + 15 * ~~(score() / 10), 50);
+        ctx.fillStyle = 'white';
+        ctx.fillText(score(), 20, 30);
+    });
+    effect(() => {
+        let prev_player;
+        ctx.fillStyle = 'white';
+        ctx.fillRect((prev_player = player()) - 35, 180, 80, 10);
+        return () => {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(prev_player - 35, 180, 80, 10);
+        };
+    });
+    effect(() => {
+        let prev_bot;
+        ctx.fillStyle = 'white';
+        ctx.fillRect((prev_bot = bot()) - 35, 20, 80, 10);
+        return () => {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(prev_bot - 35, 20, 80, 10);
+        };
+    });
+    effect(() => {
+        let prev_x, prev_y;
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.rect((prev_x = x()), (prev_y = y()), 8, 8);
+        ctx.fill();
+        return () => {
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.rect(prev_x, prev_y, 8, 8);
+            ctx.fill();
+        };
+    });
+    const direction = {
+        x: 1,
+        y: 1
+    };
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft' && player() >= 50) {
+            set_left(true);
+            set_player(player => player - 15);
+        } else if (e.key === 'ArrowRight' && player() <= 250) {
+            set_right(true);
+            set_player(player => player + 15);
+        }
+    });
+    document.addEventListener('keyup', e => {
+        if (e.key === 'ArrowLeft' && player() >= 35) {
+            set_left(false);
+        } else if (e.key === 'ArrowRight' && player() <= 265) {
+            set_right(false);
+        }
+    });
+    const update = () => {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(player() - 35, 180, 80, 10);
+        ctx.fillRect(bot() - 35, 20, 80, 10);
+        set_x(x => x + direction.x);
+        set_y(y => y + direction.y);
+        if (y() <= 50 && x() <= 50 + 15 * ~~(score() / 10)) {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, 50 + 15 * ~~(score() / 10), 50);
+            ctx.fillStyle = 'white';
+            ctx.fillText(score(), 20, 30);
+        }
+        if (y() > 168 && y() < 180) {
+            if (x() > player() - 40 && x() < player() + 40) {
+                const y_edge =
+                    player() - 40 - x() === 0 || player() + 40 - x() === 0
+                        ? null
+                        : 168 - y() < 180 - y()
+                        ? 'top'
+                        : 'bottom';
+                const x_edge =
+                    y_edge !== null
+                        ? null
+                        : player() - 40 - x() < player() + 40 - x()
+                        ? 'left'
+                        : 'right';
+
+                if (x_edge !== null) {
+                    direction.x = -direction.x;
+                }
+                if (y_edge !== null) {
+                    direction.y = -direction.y;
+                }
+            }
+        }
+        if (y() > 18 && y() < 30) {
+            if (x() > bot() - 40 && x() < bot() + 40) {
+                const y_edge =
+                    bot() - 40 - x() === 0 || bot() + 40 - x() === 0
+                        ? null
+                        : 18 - y() < 40 - y()
+                        ? 'top'
+                        : 'bottom';
+                const x_edge =
+                    y_edge !== null
+                        ? null
+                        : bot() - 40 - x() < bot() + 40 - x()
+                        ? 'left'
+                        : 'right';
+
+                if (x_edge !== null) {
+                    direction.x = -direction.x;
+                }
+                if (y_edge !== null) {
+                    direction.y = -direction.y;
+                }
+            }
+        }
+        if (x() >= 300 || x() <= 0) {
+            direction.x = -direction.x;
+        }
+        if (y() <= 0) {
+            set_score(score => score + 1);
+            set_x(150);
+            set_y(100);
+            direction.x = 1;
+            direction.y = 1;
+        }
+        if (y() >= 200) {
+            set_score(score => score - 1);
+            set_x(150);
+            set_y(100);
+            direction.x = 1;
+            direction.y = 1;
+        }
+        requestAnimationFrame(update);
+    };
+    update();
+}
